@@ -58,28 +58,30 @@
 
     <script>
 
-
-        // Function to handle login form submission
             function handleLogin(event) {
-                console.log(event.target);
                 event.preventDefault();
                 const email = event.target.email.value;
                 const password = event.target.password.value;
-                axios.get(`http://localhost:3000/login/${email}/${password}`)
+                            // `welcome.html?error=${encodeURIComponent(response.data)}`;
+            axios.get(`http://localhost:3000/login/${email}/${password}`)
                     .then(response => {
-                        if (response.ok || response.status >= 200 && response.status < 300) {
-                            window.location.href ='welcome.html';// `welcome.html?error=${encodeURIComponent(response.data)}`;
-                        } else {
-                            let p=document.createElement('p');
-                            let m=document.createTextNode('Invalid UserID or Password');
-                            p.appendChild(m);
-
-                            document.getElementById('login-form').appendChild(p);
-                        }
+                        console.log(response.status);
+                            window.location.href = 'welcome.html';
                     })
                     .catch(error => {
-                        console.error('Error fetching books:', error);
+                         displayErrorMessage('Invalid Credentials!');
                     });
+
+                function displayErrorMessage(message) {
+                    const p = document.createElement('p');
+                    p.textContent = message;
+                    p.style.color = 'red';
+                    document.getElementById('login-form').appendChild(p);
+                    setTimeout(()=>{
+                        p.remove();
+                    },5000);
+                }
+
             }
 
         // Function to switch between signup and login forms
@@ -96,7 +98,7 @@
 
         // Function to handle signup form submission
         function handleSignup(event) {
-            console.log(event.target);
+            //console.log(event.target);
             event.preventDefault();
             let obj={
                 username:event.target.username.value,
@@ -105,13 +107,12 @@
             }
             axios.post(`http://localhost:3000/signup`,obj)
                 .then(response => {
-                    if(response.ok ||response.status >= 200 && response.status < 300){
-                        window.location.href = 'usercreated.html';//`usercreated.html?error=${encodeURIComponent(data)}`;
-                    }else{
-                        window.location.href = 'exist.html';//`exist.html?error=${encodeURIComponent(data.error)}`;
-                    }
+                    console.log(response.status);
+                        window.location.href = 'usercreated.html';
+                      
                 })
                 .catch(error => {
+                    window.location.href = 'exist.html';
                     console.error('Error fetching books:', error);
                 });
         }
