@@ -1,11 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Welcome to user</h1>
+
+<body class="bg-green-300">
+    <form onsubmit="handleFormSubmit(event)" class="max-w-lg mx-auto p-4">
+        <label for="expense" class="block">Choose Expense amount</label>
+        <input type="number" name="expense" id="expense"
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
+
+        <label for="description" class="block mt-4">Description:</label>
+        <input type="text" id="description"
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
+
+        <label for="category" class="block mt-4">Choose a category:</label>
+        <select name="category" id="category"
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            <option value="Food">Food</option>
+            <option value="Fuel">Fuel</option>
+            <option value="Movie">Movie</option>
+            <option value="Electricity">Electricity</option>
+        </select>
+
+        <button class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Add Expense</button>
+    </form>
+
+    <ul class="ul"></ul>
+    <div id="response"></div>
+
+
+    <table id="table" class=" divide-y divide-gray-200 mx-auto mx-w-md">
+        <thead class="bg-gray-50">
+            <tr class="border-gray-300 rounded-md shadow-sm">
+                <th scope="col" class="border-gray-300 rounded-md shadow-sm px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">
+                    Expense
+                </th>
+                <th scope="col" class="border-gray-300 rounded-md shadow-sm px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">
+                    Category
+                </th>
+                <th scope="col" class="border-gray-300 rounded-md shadow-sm px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">
+                    Description
+                </th>
+            </tr>
+        </thead>
+        <tbody id="table-body" class="bg-white divide-y divide-gray-200">
+            
+        </tbody>
+    </table>
+
 </body>
+
+<script>
+    var userId;
+    var data;
+    function getResponseData() {
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const data = urlParams.get('data');
+        return data ? JSON.parse(decodeURIComponent(data)) : null;
+    }
+
+    function displayResponseData() {
+        const responseData = getResponseData();
+        if (responseData) {
+            data = JSON.parse(JSON.stringify(responseData));
+            userId = data.id;
+            //document.getElementById('response').innerHTML=`Welcome to The Expenses App ${data.username} and your is ${userId}`;
+        }
+    }
+
+    window.onload = function () {
+        displayResponseData();
+    };
+
+
+
+
+    function handleFormSubmit(e) {
+            e.preventDefault();
+            let obj = {
+                expense: e.target.expense.value,
+                description: e.target.description.value,
+                category: e.target.category.value,
+                userId:userId
+            }
+        axios.post('http://localhost:3000/addExpense', obj)
+            .then(response => {
+                
+                addTotable(response.data);
+
+                    })
+            .catch(error => {
+                console.error('Error fetching expenses:', error);
+            });
+
+        }
+
+        function addTotable(response){
+            const expense = response;
+            const table = document.getElementById('table');
+            const tbody = document.getElementById('table-body');
+            const tr = document.createElement('tr');
+            tr.classList.add('border-gray-400');
+            tr.innerHTML = `
+                    <td>${expense.expense}</td>
+                    <td>${expense.category}</td>
+                    <td>${expense.description}</td>
+                `;
+            tbody.appendChild(tr);
+            table.appendChild(tbody);
+        }
+
+
+        
+            window.addEventListener('DOMContentLoaded', (e) => {
+                e.preventDefault();
+                axios.get("http://localhost:3000/getExpenses").then((response) => {
+                    
+                     for (let i = 0; i < response.data.length; i++) {
+                        addTotable(response.data[i]);
+                        }
+                }).catch(err=>console.log(err));
+            });
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 </html>
+
+ 

@@ -1,11 +1,11 @@
 const users=require('../models/users');
 const bcrypt=require('../util/bcryptpassword');
 
-exports.signup=(req,res,next)=>{
+exports.signup=async(req,res,next)=>{
     users.findOne({where:{email:req.body.email}})
     .then(user=>{
         if(!user){
-            bcrypt.decrypt(req.body.password).then(pass=>{
+           bcrypt.decrypt(req.body.password).then(pass=>{
             return users.create({
                     username:req.body.username,
                     email:req.body.email,
@@ -28,7 +28,7 @@ exports.login = (req, res, next) => {
     users.findOne({ where: { email: req.params.email } })
         .then(user => {
             if (user) {
-                bcrypt.compare(req.params.password, user.password)
+                bcrypt.checkpass(req.params.password, user.password)
                     .then(passwordMatch => {
                         if (passwordMatch) {
                             console.log(user);
