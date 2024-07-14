@@ -1,216 +1,177 @@
-const expenseTable=require('../models/expenses');
-const usersTable=require('../models/users');
-const Sequelize=require('sequelize');
-const sequelize=require('../util/database');
-const fileurls=require('../models/fileurls');
-
-//getting uploadaws
+const Razorpay = require('razorpay');
+const User = require('../models/users');
+const Expense = require('../models/expenses');
+const FileUrl = require('../models/fileUrls');
 const uploadtoaws=require('../util/uploadingtoaws');
+// // Initialize Razorpay instance
+ const rzp = new Razorpay({
+     key_id: process.env.RAZORPAY_KEY_ID,
+     key_secret: process.env.RAZORPAY_KEY_SECRET
+ });
 
-
-exports.getExpenses = async(req, res, next) => {
-    let id=req.user.id;
-    if(req.params.pagenumber){
+exports.getExpenses = async (req, res, next) => {
+     console.log('in else ');
+    let userId = req.user.id;
+    if (req.params.pagenumber) {
         const page = req.params.pagenumber || 1;
         const limit = Number(req.params.itemsperpage);
-        console.log(page,limit);
-        const offset = (page - 1) * limit;
+        console.log(page, limit);
+        const skip = (page - 1) * limit;
+
         try {
-            const expenses = await expenseTable.findAll({
-                offset,
-                limit,
-                order: [['createdAt', 'DESC']]
-            });
-            let count=await expenseTable.count();
-            let totalpages=Math.ceil(count/limit);
-            expense=[...expenses,{lastpagenumber:totalpages}];
-            res.status(200).json(expense);
+            const expenses = await Expense.find({ userId })
+                .skip(skip)
+                .limit(limit)
+                .sort({ createdAt: 'desc' });
+
+            const count = await Expense.countDocuments({ userId });
+            const totalpages = Math.ceil(count / limit);
+
+            expenses.push({ lastpagenumber: totalpages });
+
+            res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error fetching users:', error);
+            console.error('Error fetching expenses:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
-
-    }else{
-    expenseTable.findAll({where:{userId:id}})
-        .then(expenses => {
-            //console.log(expenses);
-            let expen=expenses.map(i=>{
-                return i.dataValues});
-            res.status(200).json(expen); // Return all expenses as JSON
-        })
-        .catch(error => {
+    } else {
+        try {
+            console.log('in else ');
+            const expenses = await Expense.find({ userId });
+            res.status(200).json(expenses);
+        } catch (error) {
             console.error('Error fetching expenses:', error);
             res.status(500).json({ error: 'Internal server error' });
-        });
+        }
     }
 };
 
-
-exports.getLeaderbord = async (req, res, next) => {
+exports.getLeaderboard = async (req, res, next) => {
     try {
-        console.log('fromLeaderboard!');
-        const usersExpenses = await usersTable.findAll({
-            // attributes: ['username',
-            // [Sequelize.fn('SUM', Sequelize.col('expense')), 'totalExpense']
-            //     ],
-            // include:[{model:expenseTable,attributes:[]}],
-            // group:['id'],
-            // order:[['totalExpense','DESC']]
-            attributes:['username','totalexpenses','id'],
-            order:[['totalexpenses','DESC']]
-        
-        }).then(result=>{
-            console.log(result);
-            res.status(200).json(result);
-        }).catch(err=>{
-            throw new Error(err);
-        })
+        const usersExpenses = await User.find()
+            .sort({ totalExpenses: 'desc' })
+            .select('username totalExpenses');
+
+        res.status(200).json(usersExpenses);
     } catch (error) {
         console.error('Error fetching user expenses:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-
-
 exports.addExpense = async (req, res, next) => {
-    const obj = {
-        expense: req.body.expense,
-        description: req.body.description,
-        category: req.body.category,
-        userId: req.user.id // Assuming userId is passed in the request body
-    };
+    const { expense, description, category } = req.body;
+    const userId = req.user.id;
 
     try {
-        const t = await sequelize.transaction();
-        const expense = await expenseTable.create(obj, { transaction: t });
-        await changeexpense(obj.userId, obj.expense, 'add');
-        await t.commit();
-        res.status(201).json(expense); // Return the created expense record
+        const expenseObj = new Expense({
+            expense,
+            description,
+            category,
+            userId
+        });
+
+        await expenseObj.save();
+
+        // Update user's total expenses
+        const user = await User.findById(userId);
+        //user.totalExpenses += expense;
+        user.totalExpenses += parseFloat(expense); // Ensure expense is parsed as a float or integer
+        await user.save();
+
+        res.status(201).json(expenseObj);
     } catch (error) {
         console.error('Error adding expense:', error);
-        await t.rollback();
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
-function changeexpense(userid, expense, operation) {
-    return new Promise((resolve, reject) => {
-        usersTable.findByPk(userid)
-            .then(user => {
-                if (!user) {
-                    throw new Error('User not found');
-                }
-                if (operation === 'add') {
-                    user.totalexpenses += Number(expense);
-                } else if (operation === 'update') {
-                    user.totalexpenses = Number(expense);
-                } else if (operation === 'delete') {
-                    user.totalexpenses -= Number(expense);
-                } else {
-                    throw new Error('Invalid operation');
-                }
-                console.log(user);
-                return user.save();
-            })
-            .then(updatedUser => {
-                resolve(updatedUser);
-            })
-            .catch(err => {
-                console.error('Error in changeexpense:', err);
-                reject(err);
-            });
-    });
-}
-
-
-
 exports.deleteExpense = async (req, res, next) => {
+    const id = req.params.id;
+    const userId = req.user.id;
+
     try {
-        const id = req.params.id;
-        const expenseToDelete = await expenseTable.findByPk(id);
-        if (!expenseToDelete) {
+        const expense = await Expense.findById(id);
+        if (!expense) {
             throw new Error('Expense not found');
         }
 
-        const userId = expenseToDelete.userId;
-        const expenseAmount = expenseToDelete.expense;
-        const t = await sequelize.transaction();
+        if (expense.userId.toString() !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
 
-        await changeexpense(userId, expenseAmount, 'delete', t);
-        await expenseToDelete.destroy({ transaction: t });
-        await t.commit();
+        await expense.remove();
+
+        // Update user's total expenses
+        const user = await User.findById(userId);
+        user.totalExpenses -= parseFloat(expense);
+        await user.save();
+
         res.status(200).json({ message: 'Expense deleted successfully' });
     } catch (error) {
-        if (t) await t.rollback();
         console.error('Error deleting expense:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
-
-
-
 exports.updateExpense = async (req, res, next) => {
+    const id = req.params.id;
+    const userId = req.user.id;
+
     try {
-        let id = req.params.id;
-        const t = await sequelize.transaction();
-        const expenseToUpdate = await expenseTable.findByPk(id, { transaction: t });
-        if (!expenseToUpdate) {
+        const updatedExpense = await Expense.findByIdAndUpdate(id, req.body, { new: true });
+
+        // If expense not found
+        if (!updatedExpense) {
             throw new Error('Expense not found');
         }
-        expenseToUpdate.expense = req.body.expense;
-        expenseToUpdate.category = req.body.category;
-        expenseToUpdate.description = req.body.description;
 
-        await changeexpense(expenseToUpdate.userId, expenseToUpdate.expense, 'update', t);
-        const updatedExpense = await expenseToUpdate.save({ transaction: t });
-        await t.commit();
-        res.status(200).json(updatedExpense); // Respond with the updated expense record
+        // If user is not authorized to update
+        if (updatedExpense.userId.toString() !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Update user's total expenses
+        const user = await User.findById(userId);
+        user.totalExpenses += (req.body.expense - updatedExpense.expense);
+        await user.save();
+
+        res.status(200).json(updatedExpense);
     } catch (error) {
-        if (t) await t.rollback();
         console.error('Error updating expense:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+exports.download = async (req, res, next) => {
+    try {
+        const expenses = await Expense.find({ userId: req.user.id });
+        const stringifiedExpenses = JSON.stringify(expenses);
+
+        // Upload expenses to S3
+        const filename = `Expensesreport${getFormattedDate()}.txt`;
+        const fileUrl = await uploadtoaws.uploadtoS3(stringifiedExpenses, filename);
+
+        // Save file URL to database
+        const fileUrlObj = new FileUrl({
+            link: fileUrl,
+            userId: req.user.id
+        });
+        await fileUrlObj.save();
+
+        // Retrieve all file URLs for the user
+        const allUrls = await FileUrl.find({ userId: req.user.id }).select('link createdAt');
+
+        res.status(200).json(allUrls);
+    } catch (err) {
+        console.error('Error downloading expenses:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
 
 
-
-exports.download = async (req, res, next) => {
-    try {
-        // Retrieve expenses for the user
-        const expenses = await req.user.getExpenses();
-        const stringifiedExpenses = JSON.stringify(expenses);
-
-        // Upload expenses to S3
-        const filename ="Expensesreport"+getdate()+".txt";
-        const fileUrl = await uploadtoaws.uploadtoS3(stringifiedExpenses, filename);
-
-        // Save file URL to database
-        await fileurls.create({
-            link: fileUrl,
-            userId: req.user.id,
-        });
-
-        // Retrieve all file URLs for the user
-        const allUrls = await fileurls.findAll({
-            attributes: ['link', 'createdAt'],
-            where: { userId: req.user.id },
-            raw: true // Add this option to return raw data objects
-        });
-        console.log(allUrls);
-        // Send response with list of file URLs
-        res.status(200).json( allUrls );
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Internal server error" });
-    }
-};
-
-
-
-function getdate(){
+function getFormattedDate(){
     const currentDate = new Date();
 
         // Get individual date components

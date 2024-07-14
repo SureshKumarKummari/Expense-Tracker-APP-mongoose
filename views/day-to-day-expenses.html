@@ -124,7 +124,7 @@
 <script>
     document.getElementById('download').onclick=async()=>{
         let token=localStorage.getItem('token');
-        await axios.get("http://54.144.212.125:3000/download", { headers: { "Autherization": token } })
+        await axios.get("http://localhost:3000/download", { headers: { "Authorization": token } })
         .then(res=>{
             for(let i=0;i<res.data.length;i++){
                 displayUrls(res.data[i]);
@@ -163,6 +163,8 @@
          localStorage.setItem('itemsperpage', 10);
         window.onload = function () {
 
+           // document.getElementById('download').click();
+
             document.getElementById("first").setAttribute("name", "1");
             document.getElementById("prev").setAttribute("name", "0");
             document.getElementById("current").setAttribute("name", "1");
@@ -182,7 +184,7 @@
 
 
                      const token = localStorage.getItem('token');
-                    axios.get(`http://54.144.212.125:3000/getExpenses/page/${pagenumber}/${itemsperpage}`, { headers: { "Autherization": token } }).then((response) => {
+                    axios.get(`http://localhost:3000/getExpenses/page/${pagenumber}/${itemsperpage}`, { headers: { "Authorization": token } }).then((response) => {
                         
                         document.getElementById("addExpenses").innerHTML='';
                         for (let i = 0; i < response.data.length-1; i++) {

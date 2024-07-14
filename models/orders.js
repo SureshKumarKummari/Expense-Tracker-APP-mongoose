@@ -1,16 +1,20 @@
-const Sequelize=require('sequelize');
-const sequelize=require('../util/database');
+const mongoose=require('../util/database');
+const Schema = mongoose.Schema;
 
-const order=sequelize.define('orders',{
-    id:{
-        type:Sequelize.INTEGER,
-        allowNull: false,
-        primaryKey:true,
-        autoIncrement:true
-    },
-    paymentid: Sequelize.STRING,
-    orderid: Sequelize.STRING,
-    status: Sequelize.STRING
+const orderSchema = new Schema({
+    paymentid: { type: String, required: false },
+    orderid: { type: String, required: true },
+    status: { type: String, required: true }
+}, {
+    timestamps: true  // Optional: Adds createdAt and updatedAt fields
 });
 
-module.exports=order;
+const Order = mongoose.model('Order', orderSchema);
+
+if(Order){
+    console.log("collection is created");
+}else{
+    console.log("Collection is not created");
+}
+
+module.exports = Order;

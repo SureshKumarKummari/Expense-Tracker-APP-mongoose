@@ -139,6 +139,7 @@
    
     //Sending Add Expense request 
     let token=localStorage.getItem('token');
+    //console.log(token);
     function handleFormSubmit(e) {
             e.preventDefault();
             let obj = {
@@ -146,7 +147,7 @@
                 description: e.target.description.value,
                 category: e.target.category.value,
             }
-        axios.post('http://54.144.212.125:3000/addExpense',obj, { headers: { "Autherization": token } })
+        axios.post('http://localhost:3000/addExpense',obj, { headers: { "Authorization": token } })
             .then(response => {
                 
                 addTotable(response.data);
@@ -190,7 +191,7 @@
         const row = event.target.closest('tr');
         let id= row.querySelector('input[type="hidden"]').value;
         console.log(id);
-        axios.delete(`http://54.144.212.125:3000/deleteExpense/${id}`, { headers: { "Autherization": token } }).then((result) => {
+        axios.delete(`http://localhost:3000/deleteExpense/${id}`, { headers: { "Authorization": token } }).then((result) => {
             console.log("Expense Deleted!");
             row.remove();
             printleaderboard();
@@ -270,11 +271,11 @@
                     const expenseId = form.querySelector('input[name="expenseId"]').value;
 
                     // Send data to the server using Axios
-                    axios.put(`http://54.144.212.125:3000/updateExpense/${expenseId}`, {
+                    axios.put(`http://localhost:3000/updateExpense/${expenseId}`, {
                         expense,
                         category,
                         description
-                    }, { headers: { "Autherization": token } })
+                    }, { headers: { "Authorization": token } })
                         .then(response => {
                             console.log('Expense updated successfully:', response.data);
                             // Refresh the page or update the row in the table with the new data For simplicity, you can reload the page
@@ -299,13 +300,13 @@
                             let li = userids.get(response.id);
                             li.innerHTML = `<li><p style="display: inline-block;width:100px;">${i}</p>
                             <p style="display: inline-block;width:150px;">${response.username}</p>
-                            <p style="display: inline-block;width:100px;">${response.totalexpenses}</p></li>`;
+                            <p style="display: inline-block;width:100px;">${response.totalExpenses}</p></li>`;
                         } else {
                             // If the user ID does not exist, create a new list item
                             let li = document.createElement('li');
                             li.innerHTML = `<li><p style="display: inline-block;width:100px;">${i}</p>
                             <p style="display: inline-block;width:150px;">${response.username}</p>
-                            <p style="display: inline-block;width:100px;">${response.totalexpenses}</p></li>`;
+                            <p style="display: inline-block;width:100px;">${response.totalExpenses}</p></li>`;
                             ul.appendChild(li);
                             userids.set(response.id, li);
                         }
@@ -316,8 +317,8 @@
             function domload(){
 
                 //Getting and Displaying expenses data
-                axios.get(`http://54.144.212.125:3000/getExpenses`,{headers:{"Autherization":token}}).then((response) => {
-                    
+                axios.get(`http://localhost:3000/getExpenses`,{headers:{"Authorization":token}}).then((response) => {
+                    console.log(token);
                      for (let i = 0; i < response.data.length; i++) {
                         addTotable(response.data[i]);
                         }
@@ -343,7 +344,7 @@
             function printleaderboard(){
 
                 //Getting Leaderboarddata
-                axios.get(`http://54.144.212.125:3000/getLeaderboard`, { headers: { "Autherization": token } }).then((response) => {
+                axios.get(`http://localhost:3000/getLeaderboard`, { headers: { "Authorization": token } }).then((response) => {
 
                     for (let i = 0; i < response.data.length; i++) {
                         addToleaderboard(response.data[i],i+1);
@@ -357,17 +358,17 @@
 
 
                 document.getElementById('premium').onclick=async()=>{
-                    const response=await axios.get('http://54.144.212.125:3000/premiummembership', { headers: { "Autherization": token } });
+                    const response=await axios.get('http://localhost:3000/premiummembership', { headers: { "Authorization": token } });
                     console.log(response);
                     var options={
                         "key_id": response.data.key_id,
                         "order_id":response.data.order.id,
                         "handler": async function(response){
-                            await axios.post('http://54.144.212.125:3000/transactionupdate',{
+                            await axios.post('http://localhost:3000/transactionupdate',{
                                 order_id:options.order_id,
                                 payment_id:response.razorpay_payment_id,
                                 status:"SUCCESSFUL"},
-                                { headers: { "Autherization": token } }
+                                { headers: { "Authorization": token } }
                             );
                             alert('you are premium member now!');
                             localStorage.setItem('ispremium',true);
@@ -381,12 +382,12 @@
                     e.preventDefault();
                     rzp.on('payment.failed',function(response){
                         /* console.log(response);*/
-                        axios.post('http://54.144.212.125:3000/transactionupdate', {
+                        axios.post('http://localhost:3000/transactionupdate', {
                             order_id: options.order_id,
                             payment_id: response.razorpay_payment_id,
                             status: "FAILED"
                         },
-                            { headers: { "Autherization": token } }
+                            { headers: { "Authorization": token } }
                         );
                         alert('Something went wrong!');
                     });

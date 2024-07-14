@@ -1,10 +1,13 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 
-const Sequelize=require('sequelize');
-
-const db=new Sequelize(process.env.DB_DATABASE,process.env.DB_USER,process.env.DB_PASSWORD,{
-    dialect: process.env.DB_DIALECT,
-    host: process.env.DB_HOST,
+// Connect to MongoDB
+mongoose.connect(`mongodb://${process.env.DB_HOST}/${process.env.DB_DATABASE}`, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    //user: process.env.DB_USER,
+    //pass: process.env.DB_PASSWORD
 });
 
-module.exports=db;
+module.exports=mongoose;
+

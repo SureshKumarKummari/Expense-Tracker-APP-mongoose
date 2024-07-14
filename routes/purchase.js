@@ -8,6 +8,6 @@ const purchasecontroller=require('../controllers/purchase');
 router.get('/premiummembership',userauth.authenticate,purchasecontroller.purchasePremium);
 
 
-router.post('/transactionupdate',userauth.authenticate,purchasecontroller.transactionupdate);
+router.post('/transactionupdate',userauth.authenticate,purchasecontroller.transactionUpdate);
 
 module.exports=router;

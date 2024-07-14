@@ -1,76 +1,57 @@
-//Database
-const sequelize=require('./util/database');
-const expenses=require('./models/expenses');
-const users=require('./models/users');
-const orders=require('./models/orders');
-const forgotpassword=require('./models/forgotpasswordrequests');
-const fileurls=require('./models/fileurls');
-
-//Middlewares
-const helmet=require('helmet');
-const morgan=require('morgan');
-
-//base modules
-const fs=require('fs');
-
-require('dotenv').config();
-
-//Routers
-const admin=require('./routes/admin');
-const handleexpenses=require('./routes/expenses');
-const purchase=require('./routes/purchase');
-
-//importing path 
-const path = require('path');
-
 const express = require('express');
-
-const cors=require('cors');
-
+const path = require('path');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const cors = require('cors');
 const bodyParser = require('body-parser');
+const fs = require('fs');
+const dotenv = require('dotenv');
+const mongoose = require('./util/database'); // Connect to MongoDB using Mongoose
 
+// Import Mongoose models
+const User = require('./models/users');
+// Import additional models as needed (expenses, orders, forgotpasswordrequests, fileurls)
+
+// Load environment variables
+dotenv.config();
+
+// Create Express app
 const app = express();
 
-//Adding ejs middleware and seting dirname views
 app.set('views', path.join(__dirname, 'views'));
 
 app.set('view engine', 'ejs');
 
+// Set up middleware
 app.use(helmet());
 
-const accessLogstream=fs.createWriteStream(
-    path.join(__dirname,'access.log'),
-    {flags:'a'}
-);
-app.use(morgan('combined',{stream:accessLogstream}))
+// Create a write stream (for logging)
+const accessLogstream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: accessLogstream }));
 
-
+// Enable CORS
 app.use(cors());
 
+// Parse JSON bodies
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'views')));
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net");
+    next();
+});
+// Example routes (replace with your actual routes)
+const adminRouter = require('./routes/admin');
+const handleExpensesRouter = require('./routes/expenses');
+const purchaseRouter = require('./routes/purchase');
 
-app.use(admin);
+app.use(adminRouter);
+app.use(handleExpensesRouter);
+app.use(purchaseRouter);
 
-app.use(handleexpenses);
 
-app.use(purchase);
-
-users.hasMany(expenses);
-expenses.belongsTo(users);
-
-users.hasMany(orders);
-orders.belongsTo(users);
-
-users.hasMany(forgotpassword);
-forgotpassword.belongsTo(users);
-
-users.hasMany(fileurls);
-fileurls.belongsTo(users);
-
-const port=process.env.PORT || 3000;
-sequelize.sync().then(()=>{
-app.listen(port,()=>{
-    console.log(`App listening on PORT ${port}!`)
-})
-}).catch(err=>console.log(err));
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`App listening on PORT ${port}!`);
+});
 

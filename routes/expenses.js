@@ -13,7 +13,7 @@ router.delete('/deleteExpense/:id',userauth.authenticate,expense.deleteExpense);
 
 router.put('/updateExpense/:id',userauth.authenticate,expense.updateExpense);
 
-router.get('/getLeaderboard',userauth.authenticate,expense.getLeaderbord);
+router.get('/getLeaderboard',userauth.authenticate,expense.getLeaderboard);
 
 //To get expenses using pagenumber
 router.get('/getExpenses/page/:pagenumber/:itemsperpage',userauth.authenticate,expense.getExpenses);

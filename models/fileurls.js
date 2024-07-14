@@ -1,16 +1,21 @@
-const Sequelize=require('sequelize');
+const mongoose=require('../util/database');
+const Schema = mongoose.Schema;
 
-const sequelize=require('../util/database');
 
-const fileUrls=sequelize.define("fileUrls",{
-    id:{
-        type:Sequelize.INTEGER,
-        autoIncrement:true,
-        allowNull:false,
-        primaryKey:true,
-    },
-    link: Sequelize.STRING,
-    userId:Sequelize.INTEGER,
+const fileUrlSchema = new Schema({
+    link: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+}, {
+    timestamps: true  // Optional: Adds createdAt and updatedAt fields
 });
 
-module.exports=fileUrls;
+const FileUrl = mongoose.model('FileUrl', fileUrlSchema);
+
+
+if(FileUrl){
+    console.log("collection is created");
+}else{
+    console.log("Collection is not created");
+}
+
+module.exports=FileUrl;

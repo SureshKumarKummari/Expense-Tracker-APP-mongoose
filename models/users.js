@@ -1,37 +1,38 @@
-const { uniqueID } = require('mocha/lib/utils');
-const sequelize=require('../util/database');
+const mongoose=require('../util/database');
+const Schema = mongoose.Schema;
 
-const Sequelize=require('sequelize');
-
-
-const Users=sequelize.define('users',{
-    id:{
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        allowNull: false,  
-        primaryKey:true
+const userSchema = new Schema({
+    username: {
+        type: String,
+        required: true
     },
-    username:{
-        type: Sequelize.STRING,
-        alloNull: false
+    email: {
+        type: String,
+        required: true,
+        unique: true  // Ensure email is unique
     },
-    email:{
-        type: Sequelize.STRING,
-        alloNull: false,
-        primaryKey: true
+    password: {
+        type: String,
+        required: true
     },
-    password:{
-        type: Sequelize.STRING,
-        alloNull: false,
+    isPremiumUser: {
+        type: Boolean,
+        default: false
     },
-    ispremiumuser:{
-        type:Sequelize.BOOLEAN,
-        defaultValue:false
-    },
-    totalexpenses:{
-        type:Sequelize.INTEGER,
-        defaultValue:0
+    totalExpenses: {
+        type: Number,
+        default: 0
     }
 });
 
-module.exports=Users;
+const Users = mongoose.model('Users', userSchema);
+
+if(Users){
+    console.log("collection is created");
+}else{
+    console.log("Collection is not created");
+}
+
+
+module.exports = Users;
+

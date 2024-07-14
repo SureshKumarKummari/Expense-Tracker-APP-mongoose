@@ -1,30 +1,22 @@
-const Sequelize = require('sequelize');
-const sequelize = require('../util/database');
+const mongoose=require('../util/database');
+const Schema = mongoose.Schema;
 const User = require('./users'); // Import the Users model
 
-const Expenses = sequelize.define('expenses', {
-    id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    expense: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    category: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    description: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    userId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-    }
+const expenseSchema = new Schema({
+    expense: { type: Number, required: true },
+    category: { type: String, required: true },
+    description: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+}, {
+    timestamps: true  // Optional: Adds createdAt and updatedAt fields
 });
 
-module.exports = Expenses;
+const Expense = mongoose.model('Expense', expenseSchema);
+
+if(Expense){
+    console.log("collection is created");
+}else{
+    console.log("Collection is not created");
+}
+
+module.exports = Expense;
