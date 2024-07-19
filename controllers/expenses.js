@@ -10,7 +10,7 @@ const uploadtoaws=require('../util/uploadingtoaws');
  });
 
 exports.getExpenses = async (req, res, next) => {
-     console.log('in else ');
+
     let userId = req.user.id;
     if (req.params.pagenumber) {
         const page = req.params.pagenumber || 1;
@@ -100,11 +100,12 @@ exports.deleteExpense = async (req, res, next) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        await expense.remove();
+//        await expense.remove();
+        await Expense.findByIdAndDelete(id);
 
         // Update user's total expenses
         const user = await User.findById(userId);
-        user.totalExpenses -= parseFloat(expense);
+        user.totalExpenses -= parseFloat(expense.expense);
         await user.save();
 
         res.status(200).json({ message: 'Expense deleted successfully' });

@@ -94,7 +94,7 @@ exports.resetPassword = async (req, res, next) => {
         const id = req.params.id;
         const forgotRequest = await ForgotPasswordRequest.findOne({ id });
         if (!forgotRequest || !forgotRequest.isActive) {
-            res.type('application/javascript');
+           // res.type('application/javascript');
             return res.status(400).send('<html><body><h1>The Link for Resetting password has been Expired! please generate Newone To update password!</h1></html></body>');
         }
 

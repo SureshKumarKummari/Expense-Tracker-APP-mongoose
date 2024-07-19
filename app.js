@@ -10,7 +10,6 @@ const mongoose = require('./util/database'); // Connect to MongoDB using Mongoos
 
 // Import Mongoose models
 const User = require('./models/users');
-// Import additional models as needed (expenses, orders, forgotpasswordrequests, fileurls)
 
 // Load environment variables
 dotenv.config();
